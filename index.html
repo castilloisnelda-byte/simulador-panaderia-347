@@ -1,0 +1,2099 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="artifact-type" content="dashboard">
+  <meta name="design-style" content="charter">
+  <title>La Espiga de Oro — Simulador Bayesiano de Producción Artesanal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Inter:wght@100..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@1.43.0/dist/umd/lucide.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+
+      /* Page and surfaces (Charter warm cream paper + bright leaf) */
+      --background: #f7f4ec;
+      --surface-container-low: #fffdf8;
+      --surface-container: #ede5d4;
+      --surface-container-high: #e4d9c3;
+
+      /* Ink (Deep espresso & roasted coffee) */
+      --on-surface: #23160f;
+      --on-surface-variant: #594a40;
+
+      /* Rules (Burnished gold & pale wheat hairlines) */
+      --outline: #b3883e;
+      --outline-variant: #d9ccb4;
+
+      /* Accents (Espresso brown primary + antique gold + bottle green) */
+      --primary: #2d1b12;
+      --on-primary: #f7f4ec;
+      --primary-container: #ebe0cf;
+      --on-primary-container: #2d1b12;
+      --secondary: #2d5a4a;
+      --secondary-container: #e2ede8;
+      --tertiary: #876224;
+      --error: #9b2c2c;
+      --error-container: #f9e6e6;
+      --on-error: #f7f4ec;
+
+      /* Semantic */
+      --positive: #2d5a4a;
+      --warning: #8f5c14;
+      --focus: #2d1b12;
+
+      /* Data series */
+      --data-1: #2d1b12;
+      --data-2: #876224;
+      --data-3: #2d5a4a;
+      --data-4: #6b4e3d;
+      --data-context: #c9bfa9;
+
+      /* Fonts */
+      --font-headline: 'Libre Caslon Text', serif;
+      --font-body: 'Inter', sans-serif;
+      --font-label: 'Inter', sans-serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+
+      /* Type scale (Dashboard / Focused Tool) */
+      --display-size: clamp(1.75rem, 1.35rem + 1.25vw, 2.35rem);
+      --headline-size: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);
+      --subhead-size: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+      --body-size: clamp(0.9375rem, 0.9rem + 0.12vw, 1rem);
+      --label-size: 0.75rem;
+
+      /* Shape */
+      --rounded: 0.125rem;
+      --rounded-lg: 0.125rem;
+      --rounded-full: 0.125rem;
+
+      /* Style effects */
+      --brass-rule: 2px solid var(--outline);
+      --hairline: 1px solid var(--outline-variant);
+      --leaf-underline: 0 1px 0 var(--outline-variant);
+      --focus-ring: 0 0 0 2px var(--background), 0 0 0 4px var(--focus);
+
+      /* Spacing scale */
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 1rem;
+      --space-lg: 1.5rem;
+      --space-xl: 2.5rem;
+      --space-2xl: 4rem;
+
+      /* Motion */
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+      --dur-micro: 120ms;
+      --dur-short: 220ms;
+      --dur-long: 420ms;
+    }
+
+    /* Base reset */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      overflow-x: clip;
+      margin: 0;
+      padding: 0;
+      background-color: var(--background);
+      color: var(--on-surface);
+      font-family: var(--font-body);
+      font-size: var(--body-size);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    header { position: static !important; }
+
+    button, input, select {
+      font-family: inherit;
+    }
+
+    /* Focus rings */
+    :focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    /* Title Band (Charter Treatment 1 & 2) */
+    .title-band {
+      background-color: var(--primary);
+      color: var(--on-primary);
+      border-bottom: 3px solid var(--outline);
+      padding: var(--space-xl) var(--space-lg);
+    }
+    .title-band-inner {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: var(--space-lg);
+    }
+    .title-copy {
+      max-width: 68ch;
+    }
+    .kicker {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: color-mix(in srgb, var(--outline) 80%, var(--on-primary));
+      margin: 0 0 var(--space-sm) 0;
+    }
+    .title-band h1 {
+      font-family: var(--font-headline);
+      font-weight: 400;
+      font-size: var(--display-size);
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+      margin: 0 0 var(--space-sm) 0;
+      color: var(--on-primary);
+    }
+    .title-band .lede {
+      margin: 0;
+      color: color-mix(in srgb, var(--on-primary) 82%, var(--primary));
+      font-size: var(--body-size);
+      max-width: 62ch;
+    }
+    .title-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: var(--space-sm);
+    }
+    .meta-stamp {
+      font-family: var(--font-mono);
+      font-size: var(--label-size);
+      color: color-mix(in srgb, var(--outline) 82%, var(--on-primary));
+      border: 1px solid color-mix(in srgb, var(--outline) 65%, var(--primary));
+      padding: var(--space-xs) var(--space-sm);
+      border-radius: var(--rounded);
+      letter-spacing: 0.03em;
+    }
+    .header-actions {
+      display: flex;
+      gap: var(--space-sm);
+      flex-wrap: wrap;
+    }
+
+    /* Page Grid */
+    .page-grid {
+      display: grid;
+      gap: var(--space-xl);
+      padding: var(--space-lg);
+      max-width: 1240px;
+      margin: 0 auto;
+    }
+    .page-grid * { min-width: 0; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      min-height: 44px;
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--rounded);
+      font-family: var(--font-label);
+      font-size: 0.875rem;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background-color var(--dur-micro) var(--ease-out),
+                  color var(--dur-micro) var(--ease-out),
+                  border-color var(--dur-micro) var(--ease-out);
+      text-decoration: none;
+    }
+    .btn-primary {
+      background-color: var(--primary);
+      color: var(--on-primary);
+      border-color: var(--primary);
+    }
+    .btn-primary:hover {
+      background-color: color-mix(in srgb, var(--primary) 86%, var(--outline));
+    }
+    .btn-secondary {
+      background-color: transparent;
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+    .btn-secondary:hover {
+      background-color: var(--primary-container);
+    }
+    .btn-on-dark {
+      background-color: transparent;
+      color: var(--on-primary);
+      border-color: color-mix(in srgb, var(--outline) 75%, var(--on-primary));
+    }
+    .btn-on-dark:hover {
+      background-color: color-mix(in srgb, var(--on-primary) 12%, var(--primary));
+    }
+    .btn-gold {
+      background-color: var(--tertiary);
+      color: var(--on-primary);
+      border-color: var(--tertiary);
+    }
+    .btn-gold:hover {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    /* Section Headings (Charter Treatment 5) */
+    .section-head {
+      border-top: var(--brass-rule);
+      padding-top: var(--space-md);
+      border-bottom: var(--hairline);
+      padding-bottom: var(--space-sm);
+      margin-bottom: var(--space-lg);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: var(--space-sm);
+    }
+    .section-head h2 {
+      font-family: var(--font-headline);
+      font-weight: 400;
+      font-size: var(--headline-size);
+      line-height: 1.2;
+      margin: 0;
+      color: var(--on-surface);
+    }
+    .section-subtitle {
+      font-size: 0.875rem;
+      color: var(--on-surface-variant);
+      margin: 0;
+    }
+
+    /* KPI Row (Charter Treatment 3 & 4) */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
+      gap: var(--space-md);
+    }
+    .figure-card {
+      background-color: var(--surface-container-low);
+      border-top: var(--brass-rule);
+      box-shadow: var(--leaf-underline);
+      border-radius: var(--rounded-lg);
+      padding: var(--space-md) var(--space-lg);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: var(--space-xs);
+    }
+    .figure-label {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--on-surface-variant);
+      margin: 0;
+    }
+    .figure-value {
+      font-family: var(--font-headline);
+      font-weight: 400;
+      font-size: clamp(1.65rem, 1.35rem + 0.8vw, 2.15rem);
+      line-height: 1.15;
+      font-variant-numeric: tabular-nums lining-nums;
+      color: var(--on-surface);
+      margin: var(--space-xs) 0 0 0;
+    }
+    .figure-delta {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--tertiary);
+      margin: var(--space-xs) 0 0 0;
+    }
+    .figure-delta.is-positive {
+      color: var(--secondary);
+    }
+
+    /* Main Simulator Workspace */
+    .simulator-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+      gap: var(--space-lg);
+      align-items: start;
+    }
+    .leaf-panel {
+      background-color: var(--surface-container-low);
+      border-top: var(--brass-rule);
+      border-bottom: var(--hairline);
+      border-left: var(--hairline);
+      border-right: var(--hairline);
+      border-radius: var(--rounded-lg);
+      padding: var(--space-lg);
+    }
+    .panel-title {
+      font-family: var(--font-headline);
+      font-weight: 700;
+      font-size: var(--subhead-size);
+      margin: 0 0 var(--space-sm) 0;
+      color: var(--on-surface);
+    }
+    .panel-desc {
+      font-size: 0.875rem;
+      color: var(--on-surface-variant);
+      margin: 0 0 var(--space-md) 0;
+    }
+
+    /* Control Groups */
+    .control-group {
+      margin-bottom: var(--space-lg);
+    }
+    .control-label {
+      display: block;
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--on-surface-variant);
+      margin-bottom: var(--space-sm);
+    }
+    .segmented-pair {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: var(--space-sm);
+    }
+    .choice-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 2px;
+      min-height: 54px;
+      padding: var(--space-sm) var(--space-md);
+      background-color: var(--background);
+      border: 1px solid var(--outline-variant);
+      border-radius: var(--rounded);
+      color: var(--on-surface);
+      cursor: pointer;
+      text-align: left;
+      transition: background-color var(--dur-micro) var(--ease-out),
+                  border-color var(--dur-micro) var(--ease-out),
+                  box-shadow var(--dur-micro) var(--ease-out);
+    }
+    .choice-btn:hover {
+      background-color: var(--surface-container);
+    }
+    .choice-btn[aria-pressed="true"] {
+      background-color: var(--primary-container);
+      border-color: var(--primary);
+      box-shadow: inset 3px 0 0 var(--primary);
+    }
+    .choice-main {
+      font-weight: 600;
+      font-size: 0.875rem;
+      line-height: 1.25;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .choice-sub {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--on-surface-variant);
+    }
+
+    /* Presets */
+    .presets-box {
+      padding-top: var(--space-md);
+      border-top: var(--hairline);
+      margin-bottom: var(--space-lg);
+    }
+    .preset-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+    .preset-btn {
+      width: 100%;
+      min-height: 44px;
+      padding: var(--space-sm) var(--space-md);
+      background-color: var(--surface-container);
+      border: 1px solid var(--outline-variant);
+      border-radius: var(--rounded);
+      color: var(--on-surface);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-sm);
+      transition: background-color var(--dur-micro) var(--ease-out);
+    }
+    .preset-btn:hover {
+      background-color: var(--surface-container-high);
+    }
+    .preset-tag {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--tertiary);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* Unit Economics Strip */
+    .econ-strip {
+      background-color: var(--surface-container);
+      padding: var(--space-md);
+      border-radius: var(--rounded);
+      margin-bottom: var(--space-lg);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: var(--space-sm) var(--space-md);
+    }
+    .econ-item-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--on-surface-variant);
+      display: block;
+    }
+    .econ-item-val {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--on-surface);
+    }
+
+    /* Results Column */
+    .results-stack {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-lg);
+    }
+    .posterior-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      gap: var(--space-lg);
+      align-items: center;
+    }
+    .chart-box {
+      position: relative;
+      min-height: 235px;
+      width: 100%;
+    }
+
+    /* Executive Tables (Charter Style) */
+    .table-wrap {
+      overflow-x: auto;
+      width: 100%;
+    }
+    table.charter-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    .charter-table th {
+      background-color: var(--surface-container-high);
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--on-surface);
+      text-align: left;
+      padding: var(--space-sm) var(--space-md);
+      border-bottom: 1px solid var(--outline);
+    }
+    .charter-table th.num,
+    .charter-table td.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-family: var(--font-mono);
+    }
+    .charter-table td {
+      padding: var(--space-sm) var(--space-md);
+      border-bottom: var(--hairline);
+      vertical-align: middle;
+    }
+    .charter-table tr.is-optimal {
+      background-color: var(--primary-container);
+      font-weight: 600;
+    }
+    .charter-table tr.is-optimal td:first-child {
+      box-shadow: inset 3px 0 0 var(--primary);
+    }
+    .charter-table tr.rule-row {
+      cursor: pointer;
+      transition: background-color var(--dur-micro) var(--ease-out);
+    }
+    .charter-table tr.rule-row:hover {
+      background-color: var(--surface-container);
+    }
+    .charter-table tr.is-active-rule {
+      background-color: var(--primary-container);
+    }
+    .charter-table tr.is-active-rule td:first-child {
+      box-shadow: inset 3px 0 0 var(--tertiary);
+    }
+
+    /* Square Stamps / Badges (No pills) */
+    .stamp {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: var(--rounded);
+      border: 1px solid var(--outline);
+      color: var(--tertiary);
+      background-color: transparent;
+      white-space: nowrap;
+    }
+    .stamp-optimal {
+      border-color: var(--secondary);
+      color: var(--secondary);
+      background-color: var(--secondary-container);
+    }
+    .stamp-active {
+      border-color: var(--primary);
+      color: var(--on-primary);
+      background-color: var(--primary);
+    }
+    .stamp-merma {
+      border-color: var(--error);
+      color: var(--error);
+      background-color: var(--error-container);
+    }
+
+    .voip-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: var(--space-md);
+      margin-top: var(--space-md);
+      padding-top: var(--space-md);
+      border-top: var(--brass-rule);
+      font-size: 0.8125rem;
+      color: var(--on-surface-variant);
+    }
+    .voip-bar strong {
+      font-family: var(--font-mono);
+      color: var(--on-surface);
+    }
+
+    /* Explanation Subsystem */
+    .explanation-panel {
+      background-color: var(--surface-container-low);
+      border: 1px solid var(--outline);
+      border-top: 3px solid var(--primary);
+      border-radius: var(--rounded-lg);
+      padding: var(--space-lg);
+      transition: opacity var(--dur-short) var(--ease-out),
+                  transform var(--dur-short) var(--ease-out);
+    }
+    .explanation-panel[hidden] {
+      display: none;
+    }
+    .explanation-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: var(--space-md);
+      padding-bottom: var(--space-md);
+      border-bottom: var(--hairline);
+      margin-bottom: var(--space-lg);
+    }
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+      gap: var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+    .step-card {
+      background-color: var(--background);
+      border-left: 2px solid var(--outline);
+      padding: var(--space-md);
+      border-radius: var(--rounded);
+    }
+    .step-num {
+      font-family: var(--font-mono);
+      font-size: var(--label-size);
+      font-weight: 600;
+      color: var(--tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin: 0 0 var(--space-xs) 0;
+    }
+    .step-card h3 {
+      font-family: var(--font-headline);
+      font-weight: 700;
+      font-size: 1rem;
+      margin: 0 0 var(--space-xs) 0;
+    }
+    .step-card p {
+      margin: 0;
+      font-size: 0.875rem;
+      color: var(--on-surface-variant);
+    }
+    .formula-line {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      background-color: var(--surface-container);
+      padding: var(--space-xs) var(--space-sm);
+      border-radius: var(--rounded);
+      margin-top: var(--space-sm);
+      color: var(--on-surface);
+      overflow-x: auto;
+    }
+    .savings-breakdown {
+      background-color: var(--secondary-container);
+      border-top: 2px solid var(--secondary);
+      padding: var(--space-md) var(--space-lg);
+      border-radius: var(--rounded);
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+      gap: var(--space-lg);
+      align-items: center;
+    }
+    .savings-figures {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-md);
+    }
+    .savings-metric-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--on-surface-variant);
+      display: block;
+    }
+    .savings-metric-val {
+      font-family: var(--font-headline);
+      font-size: 1.35rem;
+      color: var(--secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* DAG & Rules Section */
+    .dag-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.9fr);
+      gap: var(--space-lg);
+      align-items: stretch;
+    }
+    .dag-svg-wrap {
+      background-color: var(--surface-container-low);
+      border: var(--hairline);
+      border-top: var(--brass-rule);
+      padding: var(--space-md);
+      border-radius: var(--rounded-lg);
+    }
+    .dag-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      min-height: 290px;
+    }
+    .dag-node {
+      cursor: pointer;
+    }
+    .dag-node-shape {
+      transition: fill var(--dur-micro) var(--ease-out),
+                  stroke-width var(--dur-micro) var(--ease-out);
+    }
+    .dag-node:hover .dag-node-shape,
+    .dag-node.is-selected .dag-node-shape {
+      stroke-width: 2.5;
+    }
+    .dag-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-md);
+      margin-top: var(--space-sm);
+      padding-top: var(--space-sm);
+      border-top: var(--hairline);
+      font-size: 0.78rem;
+      color: var(--on-surface-variant);
+    }
+    .dag-inspector {
+      background-color: var(--surface-container-low);
+      border: var(--hairline);
+      border-top: var(--brass-rule);
+      padding: var(--space-lg);
+      border-radius: var(--rounded-lg);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: var(--space-md);
+    }
+
+    /* 3-Layer Architecture Panel */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+      gap: var(--space-lg);
+    }
+    .arch-card {
+      background-color: var(--surface-container-low);
+      border-top: var(--brass-rule);
+      box-shadow: var(--leaf-underline);
+      padding: var(--space-lg);
+      border-radius: var(--rounded-lg);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+    .arch-layer-tag {
+      font-family: var(--font-mono);
+      font-size: var(--label-size);
+      font-weight: 600;
+      color: var(--tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .arch-card h3 {
+      font-family: var(--font-headline);
+      font-weight: 700;
+      font-size: var(--subhead-size);
+      margin: 0;
+    }
+    .arch-card p {
+      margin: 0;
+      font-size: 0.875rem;
+      color: var(--on-surface-variant);
+    }
+    .arch-list {
+      margin: var(--space-xs) 0 0 0;
+      padding-left: var(--space-md);
+      font-size: 0.84rem;
+      color: var(--on-surface);
+    }
+    .arch-list li + li {
+      margin-top: var(--space-xs);
+    }
+
+    /* Saved Scenarios Ledger */
+    .ledger-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      align-items: center;
+    }
+    .empty-state {
+      padding: var(--space-lg);
+      text-align: left;
+      background-color: var(--surface-container);
+      border-left: 2px solid var(--outline);
+      font-size: 0.875rem;
+      color: var(--on-surface-variant);
+    }
+    .inline-feedback {
+      font-size: 0.8125rem;
+      color: var(--secondary);
+      font-weight: 500;
+      min-height: 1.25em;
+    }
+
+    /* Footer */
+    .doc-footer {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: var(--space-lg);
+      border-top: var(--hairline);
+      font-size: 0.8125rem;
+      color: var(--on-surface-variant);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: var(--space-md);
+    }
+
+    /* Container Queries & Responsive Breakpoints */
+    .card-wrapper { container-type: inline-size; }
+    @container (max-width: 580px) {
+      .posterior-layout { grid-template-columns: 1fr; }
+      .savings-breakdown { grid-template-columns: 1fr; }
+      .savings-figures { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 960px) {
+      .simulator-grid { grid-template-columns: 1fr; }
+      .dag-layout { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .title-band { padding: var(--space-lg) var(--space-md); }
+      .title-meta { align-items: flex-start; }
+      .page-grid { padding: var(--space-md); gap: var(--space-lg); }
+      .segmented-pair { grid-template-columns: 1fr; }
+      .savings-breakdown { grid-template-columns: 1fr; }
+      .savings-figures { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="title-band">
+    <div class="title-band-inner">
+      <div class="title-copy">
+        <p class="kicker">Sistema Experto de Producción · Panadería Artesanal</p>
+        <h1>La Espiga de Oro — Simulador Bayesiano de Horneado</h1>
+        <p class="lede">Tablero ejecutivo de decisiones bajo incertidumbre para la planificación diaria de pan campesino (100 u, 150 u o 200 u), integrando inferencia bayesiana, matriz de Valor Monetario Esperado y control preventivo de mermas.</p>
+      </div>
+      <div class="title-meta">
+        <span class="meta-stamp">REFERENCIA: PAN CAMPESINO 500 g · PRECIO $1.90 · COSTO $0.80</span>
+        <div class="header-actions">
+          <button type="button" class="btn btn-on-dark" onclick="exportCsvReport()">
+            <i data-lucide="download" aria-hidden="true"></i>
+            Exportar reporte CSV
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-grid">
+    <!-- Top KPI Row -->
+    <section aria-label="Indicadores ejecutivos de decisión">
+      <div class="kpi-grid">
+        <article class="figure-card">
+          <p class="figure-label">Lote Óptimo Recomendado</p>
+          <p class="figure-value" id="kpi-batch">100 unidades</p>
+          <p class="figure-delta" id="kpi-rule-note">Regla activa R1 · Política conservadora</p>
+        </article>
+        <article class="figure-card">
+          <p class="figure-label">Valor Monetario Esperado (VME)</p>
+          <p class="figure-value" id="kpi-vme">$110.00 USD</p>
+          <p class="figure-delta" id="kpi-vme-margin">Utilidad neta esperada del lote</p>
+        </article>
+        <article class="figure-card">
+          <p class="figure-label">Ahorro en Mermas vs. Fijo (150 u)</p>
+          <p class="figure-value" id="kpi-savings">$23.89 USD/día</p>
+          <p class="figure-delta is-positive" id="kpi-savings-month">$716.70 USD/mes proyectados</p>
+        </article>
+        <article class="figure-card">
+          <p class="figure-label">Escenario de Demanda Dominante</p>
+          <p class="figure-value" id="kpi-dominant">59.7% Baja</p>
+          <p class="figure-delta" id="kpi-dominant-sub">P(θ₁ = 100 u | Evidencia)</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Main Interactive Simulator -->
+    <section aria-labelledby="sim-heading">
+      <div class="section-head">
+        <h2>Simulador de Evidencia Matutina y Motor Bayesiano</h2>
+        <p class="section-subtitle">Ajuste las condiciones de la jornada para recalcular P(Demanda | Evidencia) y la matriz de pagos VME en tiempo real.</p>
+      </div>
+
+      <div class="simulator-grid">
+        <!-- Input Controls -->
+        <aside class="leaf-panel" aria-label="Variables de entrada matutinas">
+          <h3 class="panel-title" id="sim-heading">Evidencia Observable de Entrada</h3>
+          <p class="panel-desc">Seleccione las tres señales disponibles antes del primer horneado (05:30 h).</p>
+
+          <div class="control-group">
+            <span class="control-label">1. Clima Matutino (Nodo C)</span>
+            <div class="segmented-pair" role="group" aria-label="Clima matutino">
+              <button type="button" class="choice-btn" id="btn-weather-sunny" aria-pressed="true" onclick="setEvidence('weather', 'sunny')">
+                <span class="choice-main"><i data-lucide="sun" aria-hidden="true"></i> Soleado / Caluroso</span>
+                <span class="choice-sub">Menor consumo de pan</span>
+              </button>
+              <button type="button" class="choice-btn" id="btn-weather-rainy" aria-pressed="false" onclick="setEvidence('weather', 'rainy')">
+                <span class="choice-main"><i data-lucide="cloud-rain" aria-hidden="true"></i> Lluvioso / Fresco</span>
+                <span class="choice-sub">Impulsa demanda alta</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <span class="control-label">2. Calendario Operativo (Nodo K)</span>
+            <div class="segmented-pair" role="group" aria-label="Calendario operativo">
+              <button type="button" class="choice-btn" id="btn-calendar-normal" aria-pressed="true" onclick="setEvidence('calendar', 'normal')">
+                <span class="choice-main"><i data-lucide="calendar" aria-hidden="true"></i> Día Normal</span>
+                <span class="choice-sub">Entre semana regular</span>
+              </button>
+              <button type="button" class="choice-btn" id="btn-calendar-payday" aria-pressed="false" onclick="setEvidence('calendar', 'payday')">
+                <span class="choice-main"><i data-lucide="calendar-check" aria-hidden="true"></i> Quincena / Fin de Sem.</span>
+                <span class="choice-sub">Alta afluencia familiar</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <span class="control-label">3. Pedidos Especiales Agendados (Nodo S)</span>
+            <div class="segmented-pair" role="group" aria-label="Pedidos especiales agendados">
+              <button type="button" class="choice-btn" id="btn-orders-none" aria-pressed="true" onclick="setEvidence('orders', 'none')">
+                <span class="choice-main"><i data-lucide="clipboard" aria-hidden="true"></i> Sin Pedidos</span>
+                <span class="choice-sub">Solo venta en mostrador</span>
+              </button>
+              <button type="button" class="choice-btn" id="btn-orders-yes" aria-pressed="false" onclick="setEvidence('orders', 'yes')">
+                <span class="choice-main"><i data-lucide="clipboard-list" aria-hidden="true"></i> Con Pedidos (≥ 30 u)</span>
+                <span class="choice-sub">Reservas confirmadas</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="econ-strip" aria-label="Parámetros unitarios del pan campesino">
+            <div>
+              <span class="econ-item-label">Precio de venta</span>
+              <span class="econ-item-val">$1.90 USD/u</span>
+            </div>
+            <div>
+              <span class="econ-item-label">Costo de producción</span>
+              <span class="econ-item-val">$0.80 USD/u</span>
+            </div>
+            <div>
+              <span class="econ-item-label">Margen neto</span>
+              <span class="econ-item-val">$1.10 USD/u</span>
+            </div>
+            <div>
+              <span class="econ-item-label">Costo por merma</span>
+              <span class="econ-item-val">$0.80 USD/u</span>
+            </div>
+          </div>
+
+          <div class="presets-box">
+            <span class="control-label">Escenarios Típicos de Operación</span>
+            <div class="preset-list">
+              <button type="button" class="preset-btn" onclick="applyPreset('sunny', 'normal', 'none')">
+                <span>Base: Soleado · Día Normal · Sin Pedidos</span>
+                <span class="preset-tag">-$23.89 merma</span>
+              </button>
+              <button type="button" class="preset-btn" onclick="applyPreset('rainy', 'normal', 'none')">
+                <span>Mixto: Lluvioso · Día Normal · Sin Pedidos</span>
+                <span class="preset-tag">Óptimo 150 u</span>
+              </button>
+              <button type="button" class="preset-btn" onclick="applyPreset('rainy', 'payday', 'yes')">
+                <span>Pico: Lluvioso · Quincena · Con Pedidos</span>
+                <span class="preset-tag">Óptimo 200 u</span>
+              </button>
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-primary" style="width: 100%;" id="btn-why" aria-expanded="true" onclick="toggleExplanation()">
+            <i data-lucide="help-circle" aria-hidden="true"></i>
+            ¿Por qué esta recomendación?
+          </button>
+        </aside>
+
+        <!-- Real-Time Outputs -->
+        <div class="results-stack card-wrapper">
+          <!-- Posterior Probabilities Panel -->
+          <div class="leaf-panel">
+            <h3 class="panel-title">Actualización Bayesiana: A Priori vs. A Posteriori P(Demanda | Evidencia)</h3>
+            <p class="panel-desc">Comparación entre el historial base P(θ) y la distribución actualizada tras observar la evidencia E = (C, K, S).</p>
+            <div class="posterior-layout">
+              <div class="chart-box">
+                <canvas id="posteriorChart" aria-label="Gráfico comparativo de probabilidades a priori y a posteriori"></canvas>
+              </div>
+              <div class="table-wrap">
+                <table class="charter-table" aria-label="Tabla de actualización bayesiana">
+                  <thead>
+                    <tr>
+                      <th>Estado (θ)</th>
+                      <th class="num">Prior P(θ)</th>
+                      <th class="num">Verosim. L(E|θ)</th>
+                      <th class="num">Posterior P(θ|E)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="posterior-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- VME Payoff Matrix Panel -->
+          <div class="leaf-panel">
+            <h3 class="panel-title">Matriz de Pagos y Valor Monetario Esperado (VME)</h3>
+            <p class="panel-desc">Utilidad neta diaria (USD) por alternativa de horneado frente a los tres estados posibles de demanda.</p>
+            <div class="table-wrap">
+              <table class="charter-table" aria-label="Matriz de pagos VME para 100u, 150u y 200u">
+                <thead>
+                  <tr>
+                    <th>Alternativa (Lote)</th>
+                    <th class="num">θ₁: Baja (100 u)</th>
+                    <th class="num">θ₂: Media (150 u)</th>
+                    <th class="num">θ₃: Alta (200 u)</th>
+                    <th class="num">VME (USD)</th>
+                    <th class="num">Merma Esp.</th>
+                    <th>Dictamen</th>
+                  </tr>
+                </thead>
+                <tbody id="payoff-tbody"></tbody>
+              </table>
+            </div>
+            <div class="voip-bar">
+              <span>Beneficio Esperado con Info. Perfecta (BEIP): <strong id="val-beip">$153.20</strong></span>
+              <span>Valor Esperado de la Info. Perfecta (VEIP): <strong id="val-veip">$43.20</strong></span>
+              <span>Línea base sin sistema: <strong>150 u fijas</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Explanation Subsystem -->
+    <section aria-labelledby="explain-heading">
+      <div class="explanation-panel" id="explanation-panel">
+        <div class="explanation-header">
+          <div>
+            <p class="step-num" style="margin-bottom: 4px;">Subsistema de Explicación Interactivo</p>
+            <h2 id="explain-heading" style="font-family: var(--font-headline); font-weight: 400; font-size: var(--headline-size); margin: 0;">
+              Trazabilidad Financiera y Razonamiento de la Recomendación
+            </h2>
+          </div>
+          <div class="ledger-actions">
+            <button type="button" class="btn btn-secondary" id="btn-benchmark" onclick="applyPreset('sunny', 'normal', 'none')">
+              <i data-lucide="rotate-ccw" aria-hidden="true"></i>
+              Ver caso base ($23.89 USD/día)
+            </button>
+          </div>
+        </div>
+
+        <div class="steps-grid" id="explanation-steps"></div>
+
+        <div class="savings-breakdown" id="savings-breakdown">
+          <div>
+            <p class="step-num" style="color: var(--secondary); margin-bottom: 4px;">Desglose Paso a Paso en Mermas</p>
+            <p id="savings-narrative" style="margin: 0; font-size: 0.9rem; color: var(--on-surface);"></p>
+          </div>
+          <div class="savings-figures">
+            <div>
+              <span class="savings-metric-label">Ahorro Diario</span>
+              <span class="savings-metric-val" id="explain-save-day">$23.89</span>
+            </div>
+            <div>
+              <span class="savings-metric-label">Proyección 30 Días</span>
+              <span class="savings-metric-val" id="explain-save-month">$716.70</span>
+            </div>
+            <div>
+              <span class="savings-metric-label">Impacto Anual</span>
+              <span class="savings-metric-val" id="explain-save-year">$8,719.85</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bayesian Network DAG & Rule Matrix -->
+    <section aria-labelledby="dag-heading">
+      <div class="section-head">
+        <h2 id="dag-heading">Grafo Acíclico Dirigido (Red Bayesiana) y Reglas de Inferencia</h2>
+        <p class="section-subtitle">Haga clic en cualquier nodo del grafo para inspeccionar su Tabla de Probabilidades Condicionales (TPC), o seleccione una regla para simularla.</p>
+      </div>
+
+      <div class="dag-layout">
+        <!-- SVG DAG -->
+        <div class="dag-svg-wrap">
+          <svg class="dag-svg" viewBox="0 0 760 330" role="img" aria-label="Grafo Acíclico Dirigido de la Red Bayesiana de Decisión">
+            <defs>
+              <marker id="arrow-gold" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--outline)"></path>
+              </marker>
+              <marker id="arrow-ink" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--primary)"></path>
+              </marker>
+            </defs>
+
+            <!-- Causal & Decision Arcs -->
+            <line x1="175" y1="62" x2="312" y2="145" stroke="var(--outline)" stroke-width="1.8" marker-end="url(#arrow-gold)" />
+            <line x1="175" y1="165" x2="305" y2="165" stroke="var(--outline)" stroke-width="1.8" marker-end="url(#arrow-gold)" />
+            <line x1="175" y1="268" x2="312" y2="185" stroke="var(--outline)" stroke-width="1.8" marker-end="url(#arrow-gold)" />
+            <line x1="455" y1="165" x2="555" y2="95" stroke="var(--primary)" stroke-width="2" marker-end="url(#arrow-ink)" />
+            <line x1="455" y1="165" x2="555" y2="235" stroke="var(--primary)" stroke-width="2" marker-end="url(#arrow-ink)" />
+            <line x1="635" y1="125" x2="635" y2="195" stroke="var(--primary)" stroke-width="2" marker-end="url(#arrow-ink)" />
+
+            <!-- Arc Labels -->
+            <text x="235" y="92" fill="var(--on-surface-variant)" font-family="var(--font-mono)" font-size="11">P(C|θ)</text>
+            <text x="225" y="156" fill="var(--on-surface-variant)" font-family="var(--font-mono)" font-size="11">P(K|θ)</text>
+            <text x="235" y="246" fill="var(--on-surface-variant)" font-family="var(--font-mono)" font-size="11">P(S|θ)</text>
+            <text x="480" y="114" fill="var(--primary)" font-family="var(--font-mono)" font-size="11">Óptimo</text>
+            <text x="480" y="222" fill="var(--primary)" font-family="var(--font-mono)" font-size="11">Pagos</text>
+
+            <!-- Node C: Clima -->
+            <g class="dag-node is-selected" id="dag-node-C" tabindex="0" role="button" aria-label="Nodo C: Clima Matutino" onclick="selectDagNode('C')" onkeydown="handleDagKey(event, 'C')">
+              <rect class="dag-node-shape" x="20" y="30" width="155" height="64" rx="2" fill="var(--surface-container-low)" stroke="var(--outline)" stroke-width="1.5" />
+              <text x="32" y="52" fill="var(--tertiary)" font-family="var(--font-mono)" font-size="10.5" font-weight="600">EVIDENCIA C</text>
+              <text x="32" y="70" fill="var(--on-surface)" font-family="var(--font-body)" font-size="13" font-weight="600">Clima Matutino</text>
+              <text id="svg-val-C" x="32" y="85" fill="var(--secondary)" font-family="var(--font-mono)" font-size="11">Soleado / Caluroso</text>
+            </g>
+
+            <!-- Node K: Calendario -->
+            <g class="dag-node" id="dag-node-K" tabindex="0" role="button" aria-label="Nodo K: Calendario" onclick="selectDagNode('K')" onkeydown="handleDagKey(event, 'K')">
+              <rect class="dag-node-shape" x="20" y="133" width="155" height="64" rx="2" fill="var(--surface-container-low)" stroke="var(--outline)" stroke-width="1.5" />
+              <text x="32" y="155" fill="var(--tertiary)" font-family="var(--font-mono)" font-size="10.5" font-weight="600">EVIDENCIA K</text>
+              <text x="32" y="173" fill="var(--on-surface)" font-family="var(--font-body)" font-size="13" font-weight="600">Calendario</text>
+              <text id="svg-val-K" x="32" y="188" fill="var(--secondary)" font-family="var(--font-mono)" font-size="11">Día Normal</text>
+            </g>
+
+            <!-- Node S: Pedidos -->
+            <g class="dag-node" id="dag-node-S" tabindex="0" role="button" aria-label="Nodo S: Pedidos Especiales" onclick="selectDagNode('S')" onkeydown="handleDagKey(event, 'S')">
+              <rect class="dag-node-shape" x="20" y="236" width="155" height="64" rx="2" fill="var(--surface-container-low)" stroke="var(--outline)" stroke-width="1.5" />
+              <text x="32" y="258" fill="var(--tertiary)" font-family="var(--font-mono)" font-size="10.5" font-weight="600">EVIDENCIA S</text>
+              <text x="32" y="276" fill="var(--on-surface)" font-family="var(--font-body)" font-size="13" font-weight="600">Pedidos Especiales</text>
+              <text id="svg-val-S" x="32" y="291" fill="var(--secondary)" font-family="var(--font-mono)" font-size="11">Sin pedidos</text>
+            </g>
+
+            <!-- Node D: Demanda (Chance Node / Oval) -->
+            <g class="dag-node" id="dag-node-D" tabindex="0" role="button" aria-label="Nodo Theta: Demanda Real" onclick="selectDagNode('D')" onkeydown="handleDagKey(event, 'D')">
+              <ellipse class="dag-node-shape" cx="385" cy="165" rx="74" ry="52" fill="var(--primary-container)" stroke="var(--primary)" stroke-width="2" />
+              <text x="385" y="143" text-anchor="middle" fill="var(--tertiary)" font-family="var(--font-mono)" font-size="10.5" font-weight="600">ESTADO OCULTO θ</text>
+              <text x="385" y="162" text-anchor="middle" fill="var(--primary)" font-family="var(--font-headline)" font-size="14" font-weight="700">Demanda Real</text>
+              <text id="svg-val-D" x="385" y="182" text-anchor="middle" fill="var(--on-surface)" font-family="var(--font-mono)" font-size="11">B:60% M:38% A:2%</text>
+            </g>
+
+            <!-- Node A: Decisión (Square Decision Node per Nilsson Fig 20.5) -->
+            <g class="dag-node" id="dag-node-A" tabindex="0" role="button" aria-label="Nodo A: Decisión de Horneado" onclick="selectDagNode('A')" onkeydown="handleDagKey(event, 'A')">
+              <rect class="dag-node-shape" x="558" y="45" width="154" height="78" rx="2" fill="var(--primary)" stroke="var(--outline)" stroke-width="2" />
+              <text x="635" y="68" text-anchor="middle" fill="var(--outline)" font-family="var(--font-mono)" font-size="10.5" font-weight="600">DECISIÓN (A)</text>
+              <text x="635" y="88" text-anchor="middle" fill="var(--on-primary)" font-family="var(--font-headline)" font-size="14" font-weight="400">Lote a Hornear</text>
+              <text id="svg-val-A" x="635" y="108" text-anchor="middle" fill="var(--on-primary)" font-family="var(--font-mono)" font-size="12" font-weight="600">Óptimo: 100 u</text>
+            </g>
+
+            <!-- Node V: Utilidad / VME (Diamond Utility Node per Nilsson Fig 20.5) -->
+            <g class="dag-node" id="dag-node-V" tabindex="0" role="button" aria-label="Nodo V: Utilidad y Merma Evitada" onclick="selectDagNode('V')" onkeydown="handleDagKey(event, 'V')">
+              <polygon class="dag-node-shape" points="635,198 730,252 635,306 540,252" fill="var(--secondary-container)" stroke="var(--secondary)" stroke-width="2" />
+              <text x="635" y="240" text-anchor="middle" fill="var(--secondary)" font-family="var(--font-mono)" font-size="10.5" font-weight="600">UTILIDAD VME</text>
+              <text id="svg-val-V" x="635" y="259" text-anchor="middle" fill="var(--on-surface)" font-family="var(--font-headline)" font-size="14" font-weight="700">$110.00 USD</text>
+              <text id="svg-val-M" x="635" y="276" text-anchor="middle" fill="var(--secondary)" font-family="var(--font-mono)" font-size="10.5">Ahorro: $23.89</text>
+            </g>
+          </svg>
+          <div class="dag-legend">
+            <span><strong>Notación Red de Decisión:</strong></span>
+            <span>Rectángulo crema = Variable observable (Evidencia)</span>
+            <span>Óvalo = Variable aleatoria (Demanda θ)</span>
+            <span>Rectángulo espresso = Nodo de decisión (A)</span>
+            <span>Rombo = Utilidad esperada (VME)</span>
+          </div>
+        </div>
+
+        <!-- TPC Node Inspector -->
+        <aside class="dag-inspector" aria-label="Inspector de Tabla de Probabilidades Condicionales">
+          <div>
+            <p class="kicker" style="color: var(--tertiary); margin-bottom: 4px;" id="inspector-kicker">NODO SELECCIONADO: EVIDENCIA C</p>
+            <h3 class="panel-title" id="inspector-title">Clima Matutino — Tabla TPC</h3>
+            <p class="panel-desc" id="inspector-desc">Probabilidades condicionales P(C | θ) calibradas según el historial estacional de la panadería.</p>
+            <div class="table-wrap" id="inspector-table-wrap"></div>
+          </div>
+          <p style="margin: 0; font-size: 0.78rem; color: var(--on-surface-variant); border-top: var(--hairline); padding-top: var(--space-sm);">
+            La estructura acíclica garantiza independencia condicional entre C, K y S dado θ, permitiendo inferencia exacta en tiempo lineal O(n).
+          </p>
+        </aside>
+      </div>
+
+      <!-- Rules Matrix -->
+      <div class="leaf-panel" style="margin-top: var(--space-lg);">
+        <h3 class="panel-title">Matriz de Reglas de Inferencia (SI … ENTONCES)</h3>
+        <p class="panel-desc">Base de conocimiento completa de 8 reglas de producción. La regla coincidente con la evidencia actual se marca como ACTIVA; haga clic en cualquier fila para cargar ese escenario.</p>
+        <div class="table-wrap">
+          <table class="charter-table" aria-label="Matriz de reglas de inferencia SI ENTONCES">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Antecedente (SI Clima ∧ Calendario ∧ Pedidos)</th>
+                <th>Consecuente (ENTONCES Lote)</th>
+                <th class="num">P(θ₁)</th>
+                <th class="num">P(θ₂)</th>
+                <th class="num">P(θ₃)</th>
+                <th class="num">VME Óptimo</th>
+                <th class="num">Ahorro Merma</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="rules-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3-Layer Software Architecture Panel -->
+    <section aria-labelledby="arch-heading">
+      <div class="section-head">
+        <h2 id="arch-heading">Arquitectura de Software en 3 Capas</h2>
+        <p class="section-subtitle">Separación modular entre interfaz ejecutiva, motor de inferencia bayesiana y almacenamiento de conocimiento.</p>
+      </div>
+
+      <div class="card-grid">
+        <article class="arch-card">
+          <span class="arch-layer-tag">Capa 01 · Presentación (UI)</span>
+          <h3>Tablero Ejecutivo y Subsistema de Explicación</h3>
+          <p>Interfaz reactiva en tonos crema, espresso y dorado diseñada para la toma de decisiones matutina en planta sin fricción.</p>
+          <ul class="arch-list">
+            <li>Captura directa de evidencia matutina (C, K, S).</li>
+            <li>Visualización de matriz de pagos VME y barras prior/posterior.</li>
+            <li>Grafo Acíclico Dirigido interactivo con inspector de nodos TPC.</li>
+            <li>Botón de auditoría <em>«¿Por qué esta recomendación?»</em> con desglose de mermas.</li>
+          </ul>
+        </article>
+
+        <article class="arch-card">
+          <span class="arch-layer-tag">Capa 02 · Lógica de Inferencia</span>
+          <h3>Motor Bayesiano y Base de Reglas de Producción</h3>
+          <p>Núcleo de cálculo probabilístico y normativo inspirado en sistemas expertos basados en conocimiento e incertidumbre.</p>
+          <ul class="arch-list">
+            <li>Normalización exacta mediante Teorema de Bayes: P(θ|E) ∝ P(θ)·∏P(Eᵢ|θ).</li>
+            <li>Evaluación encadenada de reglas SI… ENTONCES (R1 a R8).</li>
+            <li>Cálculo dinámico de VME, BEIP, VEIP y ahorro esperado en merma.</li>
+            <li>Generación determinista de la traza explicativa paso a paso.</li>
+          </ul>
+        </article>
+
+        <article class="arch-card">
+          <span class="arch-layer-tag">Capa 03 · Datos y Persistencia</span>
+          <h3>Tablas TPC, Costos Unitarios y Bitácora Operativa</h3>
+          <p>Repositorio estructurado de parámetros económicos, probabilidades condicionales calibradas y memoria de simulaciones.</p>
+          <ul class="arch-list">
+            <li>Tablas de Probabilidades Condicionales (TPC) para clima, calendario y pedidos.</li>
+            <li>Parámetros financieros del pan campesino ($1.90 venta / $0.80 costo).</li>
+            <li>Persistencia de estado y bitácora de escenarios entre sesiones.</li>
+            <li>Exportación estructurada en formato CSV para auditoría administrativa.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <!-- Persistent Scenarios Ledger -->
+    <section aria-labelledby="ledger-heading">
+      <div class="section-head">
+        <h2 id="ledger-heading">Bitácora de Escenarios Evaluados</h2>
+        <div class="ledger-actions">
+          <button type="button" class="btn btn-primary" onclick="saveCurrentScenario()">
+            <i data-lucide="bookmark-plus" aria-hidden="true"></i>
+            Guardar escenario actual
+          </button>
+          <button type="button" class="btn btn-secondary" id="btn-clear-ledger" onclick="clearSavedScenarios(this)">
+            Limpiar bitácora
+          </button>
+        </div>
+      </div>
+
+      <p class="inline-feedback" id="ledger-feedback" role="status" aria-live="polite"></p>
+
+      <div class="leaf-panel">
+        <div id="ledger-empty" class="empty-state">
+          Aún no hay escenarios guardados en la bitácora. Ajuste las variables de clima, calendario o pedidos y pulse <strong>Guardar escenario actual</strong> para comparar corridas entre sí.
+        </div>
+        <div class="table-wrap" id="ledger-table-wrap" hidden>
+          <table class="charter-table" aria-label="Bitácora de escenarios simulados">
+            <thead>
+              <tr>
+                <th>Escenario (Evidencia)</th>
+                <th>Regla</th>
+                <th>Lote Óptimo</th>
+                <th class="num">VME (USD)</th>
+                <th class="num">Ahorro Merma</th>
+                <th class="num">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="ledger-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="doc-footer">
+    <span>Panadería Artesanal «La Espiga de Oro» · Sistema de Apoyo a Decisiones bajo Incertidumbre (Pan Campesino 500 g).</span>
+    <span>Fundamento metodológico: Teoría de Decisiones Bayesianas (BEIAP/VEIP), Redes de Creencia (Nilsson) y Sistemas Expertos Basados en Reglas (Giarratano &amp; Riley).</span>
+  </footer>
+
+  <api-shim></api-shim>
+  <script>
+    (function () {
+      const MODEL = {
+        unitPrice: 1.90,
+        unitCost: 0.80,
+        unitMargin: 1.10,
+        baselineBatch: 150,
+        states: [
+          { id: 'theta1', label: 'θ₁: Baja (100 u)', shortLabel: 'Baja', demand: 100, prior: 0.25 },
+          { id: 'theta2', label: 'θ₂: Media (150 u)', shortLabel: 'Media', demand: 150, prior: 0.45 },
+          { id: 'theta3', label: 'θ₃: Alta (200 u)', shortLabel: 'Alta', demand: 200, prior: 0.30 }
+        ],
+        batches: [100, 150, 200],
+        likelihoods: {
+          weather: {
+            sunny: { label: 'Soleado / Caluroso', probs: [0.75, 0.55, 0.23] },
+            rainy: { label: 'Lluvioso / Fresco', probs: [0.25, 0.45, 0.77] }
+          },
+          calendar: {
+            normal: { label: 'Día Normal', probs: [0.80, 0.55, 0.25] },
+            payday: { label: 'Quincena / Fin de Sem.', probs: [0.20, 0.45, 0.75] }
+          },
+          orders: {
+            none: { label: 'Sin pedidos', probs: [0.85, 0.60, 0.25] },
+            yes: { label: 'Con pedidos (≥ 30 u)', probs: [0.15, 0.40, 0.75] }
+          }
+        },
+        rulesMeta: [
+          { id: 'R1', weather: 'sunny', calendar: 'normal', orders: 'none' },
+          { id: 'R2', weather: 'sunny', calendar: 'normal', orders: 'yes' },
+          { id: 'R3', weather: 'sunny', calendar: 'payday', orders: 'none' },
+          { id: 'R4', weather: 'sunny', calendar: 'payday', orders: 'yes' },
+          { id: 'R5', weather: 'rainy', calendar: 'normal', orders: 'none' },
+          { id: 'R6', weather: 'rainy', calendar: 'normal', orders: 'yes' },
+          { id: 'R7', weather: 'rainy', calendar: 'payday', orders: 'none' },
+          { id: 'R8', weather: 'rainy', calendar: 'payday', orders: 'yes' }
+        ]
+      };
+
+      const appState = {
+        weather: 'sunny',
+        calendar: 'normal',
+        orders: 'none',
+        explanationOpen: true,
+        selectedNode: 'C',
+        savedScenarios: []
+      };
+
+      let posteriorChartInstance = null;
+
+      function formatUsd(val) {
+        return `$${Number(val).toFixed(2)}`;
+      }
+
+      function formatPct(val) {
+        return `${(Number(val) * 100).toFixed(1)}%`;
+      }
+
+      function computePayoff(batch, demand) {
+        const sold = Math.min(batch, demand);
+        return sold * MODEL.unitPrice - batch * MODEL.unitCost;
+      }
+
+      function computeWasteCost(batch, demand) {
+        const unsold = Math.max(0, batch - demand);
+        return unsold * MODEL.unitCost;
+      }
+
+      function evaluateScenario(weather, calendar, orders) {
+        const lW = MODEL.likelihoods.weather[weather].probs;
+        const lK = MODEL.likelihoods.calendar[calendar].probs;
+        const lS = MODEL.likelihoods.orders[orders].probs;
+
+        const jointLikelihoods = MODEL.states.map((_, idx) => lW[idx] * lK[idx] * lS[idx]);
+        const unnormalized = MODEL.states.map((st, idx) => st.prior * jointLikelihoods[idx]);
+        const evidenceProb = unnormalized.reduce((acc, v) => acc + v, 0);
+        const posteriors = unnormalized.map((v) => v / evidenceProb);
+
+        const batchResults = MODEL.batches.map((batch) => {
+          const payoffs = MODEL.states.map((st) => computePayoff(batch, st.demand));
+          const vme = payoffs.reduce((acc, pay, idx) => acc + pay * posteriors[idx], 0);
+          const expectedWaste = MODEL.states.reduce((acc, st, idx) => {
+            return acc + computeWasteCost(batch, st.demand) * posteriors[idx];
+          }, 0);
+          const expectedUnsold = MODEL.states.reduce((acc, st, idx) => {
+            return acc + Math.max(0, batch - st.demand) * posteriors[idx];
+          }, 0);
+          return {
+            batch,
+            payoffs,
+            vme,
+            expectedWaste,
+            expectedUnsold
+          };
+        });
+
+        let optimal = batchResults[0];
+        batchResults.forEach((res) => {
+          if (res.vme > optimal.vme) {
+            optimal = res;
+          }
+        });
+
+        const baselineResult = batchResults.find((r) => r.batch === MODEL.baselineBatch);
+        const wasteSavingsVsBaseline = Math.max(0, baselineResult.expectedWaste - optimal.expectedWaste);
+
+        // BEIP and VEIP
+        const beip = MODEL.states.reduce((acc, st, idx) => {
+          const bestPayoffInState = Math.max(...MODEL.batches.map((b) => computePayoff(b, st.demand)));
+          return acc + bestPayoffInState * posteriors[idx];
+        }, 0);
+        const veip = beip - optimal.vme;
+
+        const activeRule = MODEL.rulesMeta.find(
+          (r) => r.weather === weather && r.calendar === calendar && r.orders === orders
+        ) || MODEL.rulesMeta[0];
+
+        let dominantIdx = 0;
+        posteriors.forEach((p, idx) => {
+          if (p > posteriors[dominantIdx]) dominantIdx = idx;
+        });
+
+        return {
+          weather,
+          calendar,
+          orders,
+          jointLikelihoods,
+          unnormalized,
+          evidenceProb,
+          posteriors,
+          batchResults,
+          optimal,
+          baselineResult,
+          wasteSavingsVsBaseline,
+          beip,
+          veip,
+          activeRule,
+          dominantIdx
+        };
+      }
+
+      function getTokenColor(tokenName) {
+        return getComputedStyle(document.documentElement).getPropertyValue(tokenName).trim();
+      }
+
+      function renderChart(evalData) {
+        const canvas = document.getElementById('posteriorChart');
+        if (!canvas || typeof Chart === 'undefined') return;
+
+        const ctx = canvas.getContext('2d');
+        const priorsPct = MODEL.states.map((s) => Number((s.prior * 100).toFixed(2)));
+        const posteriorsPct = evalData.posteriors.map((p) => Number((p * 100).toFixed(2)));
+
+        const colorPrior = getTokenColor('--data-context');
+        const colorPost = getTokenColor('--data-1');
+        const colorGold = getTokenColor('--data-2');
+        const colorInk = getTokenColor('--on-surface');
+        const colorMuted = getTokenColor('--on-surface-variant');
+        const colorGrid = getTokenColor('--outline-variant');
+
+        if (posteriorChartInstance) {
+          posteriorChartInstance.data.datasets[0].data = priorsPct;
+          posteriorChartInstance.data.datasets[1].data = posteriorsPct;
+          posteriorChartInstance.update();
+          return;
+        }
+
+        posteriorChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['Baja (100 u)', 'Media (150 u)', 'Alta (200 u)'],
+            datasets: [
+              {
+                label: 'A Priori P(θ)',
+                data: priorsPct,
+                backgroundColor: colorPrior,
+                borderColor: colorPrior,
+                borderWidth: 1,
+                borderRadius: 2
+              },
+              {
+                label: 'A Posteriori P(θ|E)',
+                data: posteriorsPct,
+                backgroundColor: [colorPost, colorGold, getTokenColor('--data-3')],
+                borderRadius: 2
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'top',
+                align: 'start',
+                labels: {
+                  color: colorInk,
+                  boxWidth: 12,
+                  font: { family: 'Inter', size: 12 }
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`;
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                  color: colorMuted,
+                  callback: function (v) { return `${v}%`; }
+                },
+                grid: { color: colorGrid }
+              },
+              x: {
+                ticks: { color: colorInk },
+                grid: { display: false }
+              }
+            }
+          }
+        });
+      }
+
+      function renderUI() {
+        const evalData = evaluateScenario(appState.weather, appState.calendar, appState.orders);
+
+        // Update choice buttons aria-pressed
+        const buttonStates = [
+          ['btn-weather-sunny', appState.weather === 'sunny'],
+          ['btn-weather-rainy', appState.weather === 'rainy'],
+          ['btn-calendar-normal', appState.calendar === 'normal'],
+          ['btn-calendar-payday', appState.calendar === 'payday'],
+          ['btn-orders-none', appState.orders === 'none'],
+          ['btn-orders-yes', appState.orders === 'yes']
+        ];
+        buttonStates.forEach(([id, pressed]) => {
+          const el = document.getElementById(id);
+          if (el) el.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+        });
+
+        // KPI Row
+        const kpiBatch = document.getElementById('kpi-batch');
+        if (kpiBatch) kpiBatch.textContent = `${evalData.optimal.batch} unidades`;
+
+        const kpiRuleNote = document.getElementById('kpi-rule-note');
+        if (kpiRuleNote) {
+          const policyName = evalData.optimal.batch === 100
+            ? 'Política conservadora (anti-merma)'
+            : evalData.optimal.batch === 150
+              ? 'Política equilibrada'
+              : 'Política expansiva (alta demanda)';
+          kpiRuleNote.textContent = `Regla activa ${evalData.activeRule.id} · ${policyName}`;
+        }
+
+        const kpiVme = document.getElementById('kpi-vme');
+        if (kpiVme) kpiVme.textContent = `${formatUsd(evalData.optimal.vme)} USD`;
+
+        const kpiVmeMargin = document.getElementById('kpi-vme-margin');
+        if (kpiVmeMargin) {
+          kpiVmeMargin.textContent = `Merma esperada del lote: ${formatUsd(evalData.optimal.expectedWaste)} USD`;
+        }
+
+        const kpiSavings = document.getElementById('kpi-savings');
+        const kpiSavingsMonth = document.getElementById('kpi-savings-month');
+        if (kpiSavings) {
+          if (evalData.optimal.batch === 100) {
+            kpiSavings.textContent = `${formatUsd(evalData.wasteSavingsVsBaseline)} USD/día`;
+          } else if (evalData.optimal.batch === 200) {
+            const extraProfit = evalData.optimal.vme - evalData.baselineResult.vme;
+            kpiSavings.textContent = `+${formatUsd(extraProfit)} USD/día`;
+          } else {
+            kpiSavings.textContent = `$0.00 USD/día`;
+          }
+        }
+        if (kpiSavingsMonth) {
+          if (evalData.optimal.batch === 100) {
+            kpiSavingsMonth.textContent = `${formatUsd(evalData.wasteSavingsVsBaseline * 30)} USD/mes en mermas evitadas`;
+          } else if (evalData.optimal.batch === 200) {
+            const extraProfit = evalData.optimal.vme - evalData.baselineResult.vme;
+            kpiSavingsMonth.textContent = `+${formatUsd(extraProfit * 30)} USD/mes por ventas no perdidas`;
+          } else {
+            kpiSavingsMonth.textContent = `Coincide con el lote base de 150 u`;
+          }
+        }
+
+        const domState = MODEL.states[evalData.dominantIdx];
+        const kpiDom = document.getElementById('kpi-dominant');
+        if (kpiDom) kpiDom.textContent = `${formatPct(evalData.posteriors[evalData.dominantIdx])} ${domState.shortLabel}`;
+        const kpiDomSub = document.getElementById('kpi-dominant-sub');
+        if (kpiDomSub) kpiDomSub.textContent = `P(${domState.label} | Evidencia)`;
+
+        // Posterior Table
+        const posteriorTbody = document.getElementById('posterior-tbody');
+        if (posteriorTbody) {
+          posteriorTbody.innerHTML = MODEL.states.map((st, idx) => {
+            const isDom = idx === evalData.dominantIdx;
+            return `<tr class="${isDom ? 'is-optimal' : ''}">
+              <td>${st.label}</td>
+              <td class="num">${formatPct(st.prior)}</td>
+              <td class="num">${evalData.jointLikelihoods[idx].toFixed(4)}</td>
+              <td class="num"><strong>${(evalData.posteriors[idx] * 100).toFixed(2)}%</strong></td>
+            </tr>`;
+          }).join('');
+        }
+
+        // Payoff Matrix Table
+        const payoffTbody = document.getElementById('payoff-tbody');
+        if (payoffTbody) {
+          payoffTbody.innerHTML = evalData.batchResults.map((res) => {
+            const isOpt = res.batch === evalData.optimal.batch;
+            const badge = isOpt
+              ? `<span class="stamp stamp-optimal">Óptima</span>`
+              : res.expectedWaste > evalData.optimal.expectedWaste + 10
+                ? `<span class="stamp stamp-merma">Alta merma</span>`
+                : `<span class="stamp">Subóptima</span>`;
+            return `<tr class="${isOpt ? 'is-optimal' : ''}">
+              <td><strong>Hornear ${res.batch} u</strong></td>
+              <td class="num">${formatUsd(res.payoffs[0])}</td>
+              <td class="num">${formatUsd(res.payoffs[1])}</td>
+              <td class="num">${formatUsd(res.payoffs[2])}</td>
+              <td class="num"><strong>${formatUsd(res.vme)}</strong></td>
+              <td class="num">${formatUsd(res.expectedWaste)}</td>
+              <td>${badge}</td>
+            </tr>`;
+          }).join('');
+        }
+
+        const valBeip = document.getElementById('val-beip');
+        if (valBeip) valBeip.textContent = `${formatUsd(evalData.beip)} USD`;
+        const valVeip = document.getElementById('val-veip');
+        if (valVeip) valVeip.textContent = `${formatUsd(evalData.veip)} USD`;
+
+        // Render Chart
+        renderChart(evalData);
+
+        // Render Explanation Subsystem
+        renderExplanation(evalData);
+
+        // Update SVG DAG live values & inspector
+        updateDagValues(evalData);
+        renderDagInspector(appState.selectedNode, evalData);
+
+        // Render Rules Matrix
+        renderRulesMatrix(evalData);
+
+        // Render Saved Scenarios Ledger
+        renderLedger();
+      }
+
+      function renderExplanation(evalData) {
+        const panel = document.getElementById('explanation-panel');
+        const btnWhy = document.getElementById('btn-why');
+        if (panel) panel.hidden = !appState.explanationOpen;
+        if (btnWhy) btnWhy.setAttribute('aria-expanded', appState.explanationOpen ? 'true' : 'false');
+
+        const wLabel = MODEL.likelihoods.weather[evalData.weather].label;
+        const kLabel = MODEL.likelihoods.calendar[evalData.calendar].label;
+        const sLabel = MODEL.likelihoods.orders[evalData.orders].label;
+
+        const stepsEl = document.getElementById('explanation-steps');
+        if (stepsEl) {
+          stepsEl.innerHTML = `
+            <article class="step-card">
+              <p class="step-num">Paso 01 · Evidencia y Regla</p>
+              <h3>Lectura del Entorno Matutino</h3>
+              <p>Se observa <strong>${wLabel}</strong>, <strong>${kLabel}</strong> y <strong>${sLabel}</strong>. El motor activa la regla <strong>${evalData.activeRule.id}</strong>.</p>
+              <div class="formula-line">SI C="${wLabel}" ∧ K="${kLabel}" ∧ S="${sLabel}" → Lote ${evalData.optimal.batch} u</div>
+            </article>
+            <article class="step-card">
+              <p class="step-num">Paso 02 · Inferencia Bayesiana</p>
+              <h3>Actualización de Probabilidades</h3>
+              <p>Con constante de normalización P(E) = ${evalData.evidenceProb.toFixed(6)}, la distribución posterior pasa a:</p>
+              <div class="formula-line">P(θ₁)=${(evalData.posteriors[0]*100).toFixed(2)}% | P(θ₂)=${(evalData.posteriors[1]*100).toFixed(2)}% | P(θ₃)=${(evalData.posteriors[2]*100).toFixed(2)}%</div>
+            </article>
+            <article class="step-card">
+              <p class="step-num">Paso 03 · Criterio VME</p>
+              <h3>Maximización del Beneficio Neto</h3>
+              <p>Al ponderar la matriz de pagos por P(θ|E), <strong>${evalData.optimal.batch} u</strong> obtiene el mayor Valor Monetario Esperado.</p>
+              <div class="formula-line">VME(100)=${formatUsd(evalData.batchResults[0].vme)} | VME(150)=${formatUsd(evalData.batchResults[1].vme)} | VME(200)=${formatUsd(evalData.batchResults[2].vme)}</div>
+            </article>
+          `;
+        }
+
+        const narrativeEl = document.getElementById('savings-narrative');
+        const saveDayEl = document.getElementById('explain-save-day');
+        const saveMonthEl = document.getElementById('explain-save-month');
+        const saveYearEl = document.getElementById('explain-save-year');
+
+        if (evalData.optimal.batch === 100) {
+          const baseWasteUnits = evalData.baselineResult.expectedUnsold.toFixed(2);
+          const optWasteUnits = evalData.optimal.expectedUnsold.toFixed(2);
+          const saveDay = evalData.wasteSavingsVsBaseline;
+          if (narrativeEl) {
+            narrativeEl.innerHTML = `Bajo la práctica tradicional fija de <strong>150 u</strong>, existe un <strong>${(evalData.posteriors[0]*100).toFixed(2)}%</strong> de probabilidad de demanda baja (100 u), dejando un excedente esperado de <strong>50 u × ${(evalData.posteriors[0]*100).toFixed(2)}% = ${baseWasteUnits} panes/día</strong> sin vender. A un costo unitario de <strong>$0.80 USD</strong>, eso genera <strong>${formatUsd(evalData.baselineResult.expectedWaste)} USD/día</strong> en mermas frente a <strong>${formatUsd(evalData.optimal.expectedWaste)} USD</strong> (${optWasteUnits} u) produciendo <strong>100 u</strong>: un ahorro neto directo de <strong>${formatUsd(saveDay)} USD/día</strong>.`;
+          }
+          if (saveDayEl) saveDayEl.textContent = `${formatUsd(saveDay)}`;
+          if (saveMonthEl) saveMonthEl.textContent = `${formatUsd(saveDay * 30)}`;
+          if (saveYearEl) saveYearEl.textContent = `${formatUsd(saveDay * 365)}`;
+        } else if (evalData.optimal.batch === 150) {
+          const saveVs200 = evalData.batchResults[2].expectedWaste - evalData.optimal.expectedWaste;
+          if (narrativeEl) {
+            narrativeEl.innerHTML = `En este escenario la recomendación óptima (<strong>150 u</strong>) coincide con el lote base tradicional. Sin embargo, evita sobredimensionar a <strong>200 u</strong>, protegiendo <strong>${formatUsd(saveVs200)} USD/día</strong> en mermas que se perderían si la demanda queda en Baja o Media (P = ${((evalData.posteriors[0] + evalData.posteriors[1]) * 100).toFixed(1)}%). Recuerde que en el escenario base soleado el ahorro directo frente a 150 u es de <strong>$23.89 USD/día</strong>.`;
+          }
+          if (saveDayEl) saveDayEl.textContent = `${formatUsd(saveVs200)}`;
+          if (saveMonthEl) saveMonthEl.textContent = `${formatUsd(saveVs200 * 30)}`;
+          if (saveYearEl) saveYearEl.textContent = `${formatUsd(saveVs200 * 365)}`;
+        } else {
+          const gainVs150 = evalData.optimal.vme - evalData.baselineResult.vme;
+          if (narrativeEl) {
+            narrativeEl.innerHTML = `Con una probabilidad de demanda alta de <strong>${(evalData.posteriors[2]*100).toFixed(2)}%</strong>, producir solo 150 u provocaría quiebre de inventario. Ampliar el lote a <strong>200 u</strong> mantiene la merma controlada en <strong>${formatUsd(evalData.optimal.expectedWaste)} USD/día</strong> y captura <strong>+${formatUsd(gainVs150)} USD/día</strong> adicionales en margen neto frente al lote fijo de 150 u.`;
+          }
+          if (saveDayEl) saveDayEl.textContent = `+${formatUsd(gainVs150)}`;
+          if (saveMonthEl) saveMonthEl.textContent = `+${formatUsd(gainVs150 * 30)}`;
+          if (saveYearEl) saveYearEl.textContent = `+${formatUsd(gainVs150 * 365)}`;
+        }
+      }
+
+      function updateDagValues(evalData) {
+        const map = [
+          ['svg-val-C', MODEL.likelihoods.weather[evalData.weather].label],
+          ['svg-val-K', MODEL.likelihoods.calendar[evalData.calendar].label],
+          ['svg-val-S', MODEL.likelihoods.orders[evalData.orders].label],
+          ['svg-val-D', `B:${Math.round(evalData.posteriors[0]*100)}% M:${Math.round(evalData.posteriors[1]*100)}% A:${Math.round(evalData.posteriors[2]*100)}%`],
+          ['svg-val-A', `Óptimo: ${evalData.optimal.batch} u`],
+          ['svg-val-V', `${formatUsd(evalData.optimal.vme)} USD`],
+          ['svg-val-M', evalData.optimal.batch === 100 ? `Ahorro: ${formatUsd(evalData.wasteSavingsVsBaseline)}` : `Merma: ${formatUsd(evalData.optimal.expectedWaste)}`]
+        ];
+        map.forEach(([id, txt]) => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = txt;
+        });
+
+        ['C', 'K', 'S', 'D', 'A', 'V'].forEach((n) => {
+          const nodeEl = document.getElementById(`dag-node-${n}`);
+          if (nodeEl) {
+            if (n === appState.selectedNode) {
+              nodeEl.classList.add('is-selected');
+            } else {
+              nodeEl.classList.remove('is-selected');
+            }
+          }
+        });
+      }
+
+      function renderDagInspector(nodeId, evalData) {
+        const kicker = document.getElementById('inspector-kicker');
+        const title = document.getElementById('inspector-title');
+        const desc = document.getElementById('inspector-desc');
+        const wrap = document.getElementById('inspector-table-wrap');
+        if (!kicker || !title || !desc || !wrap) return;
+
+        if (nodeId === 'C' || nodeId === 'K' || nodeId === 'S') {
+          const key = nodeId === 'C' ? 'weather' : nodeId === 'K' ? 'calendar' : 'orders';
+          const metaTitle = nodeId === 'C' ? 'Clima Matutino — Tabla TPC' : nodeId === 'K' ? 'Calendario Operativo — Tabla TPC' : 'Pedidos Especiales — Tabla TPC';
+          const activeVal = appState[key];
+          const entries = Object.entries(MODEL.likelihoods[key]);
+
+          kicker.textContent = `NODO SELECCIONADO: EVIDENCIA ${nodeId}`;
+          title.textContent = metaTitle;
+          desc.textContent = `Probabilidades condicionales P(${nodeId} | θ) utilizadas en la verosimilitud bayesiana.`;
+
+          wrap.innerHTML = `<table class="charter-table">
+            <thead>
+              <tr>
+                <th>Estado de ${nodeId}</th>
+                <th class="num">θ₁ (100u)</th>
+                <th class="num">θ₂ (150u)</th>
+                <th class="num">θ₃ (200u)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${entries.map(([k, obj]) => `
+                <tr class="${k === activeVal ? 'is-optimal' : ''}">
+                  <td>${obj.label}</td>
+                  <td class="num">${obj.probs[0].toFixed(2)}</td>
+                  <td class="num">${obj.probs[1].toFixed(2)}</td>
+                  <td class="num">${obj.probs[2].toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+        } else if (nodeId === 'D') {
+          kicker.textContent = 'NODO SELECCIONADO: ESTADO OCULTO θ';
+          title.textContent = 'Demanda Diaria de Pan Campesino';
+          desc.textContent = 'Distribución histórica a priori y probabilidad actualizada a posteriori tras observar C, K y S.';
+          wrap.innerHTML = `<table class="charter-table">
+            <thead>
+              <tr>
+                <th>Demanda</th>
+                <th class="num">Prior</th>
+                <th class="num">Posterior</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${MODEL.states.map((s, idx) => `
+                <tr class="${idx === evalData.dominantIdx ? 'is-optimal' : ''}">
+                  <td>${s.label}</td>
+                  <td class="num">${formatPct(s.prior)}</td>
+                  <td class="num">${(evalData.posteriors[idx] * 100).toFixed(2)}%</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+        } else if (nodeId === 'A') {
+          kicker.textContent = 'NODO SELECCIONADO: DECISIÓN A';
+          title.textContent = 'Alternativas de Lote a Hornear';
+          desc.textContent = 'El nodo de decisión selecciona el tamaño de lote que maximiza el Valor Monetario Esperado (VME).';
+          wrap.innerHTML = `<table class="charter-table">
+            <thead>
+              <tr>
+                <th>Lote</th>
+                <th class="num">Inversión Costo</th>
+                <th class="num">VME Actual</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${evalData.batchResults.map((r) => `
+                <tr class="${r.batch === evalData.optimal.batch ? 'is-optimal' : ''}">
+                  <td>${r.batch} unidades</td>
+                  <td class="num">${formatUsd(r.batch * MODEL.unitCost)}</td>
+                  <td class="num">${formatUsd(r.vme)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+        } else {
+          kicker.textContent = 'NODO SELECCIONADO: UTILIDAD VME';
+          title.textContent = 'Función de Valor y Control de Merma';
+          desc.textContent = 'Evalúa el beneficio neto B = Ingresos − Costos y cuantifica la merma evitada frente al lote tradicional.';
+          wrap.innerHTML = `<table class="charter-table">
+            <thead>
+              <tr>
+                <th>Indicador</th>
+                <th class="num">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="is-optimal">
+                <td>VME Óptimo (${evalData.optimal.batch} u)</td>
+                <td class="num">${formatUsd(evalData.optimal.vme)} USD</td>
+              </tr>
+              <tr>
+                <td>Merma Esperada Lote Óptimo</td>
+                <td class="num">${formatUsd(evalData.optimal.expectedWaste)} USD</td>
+              </tr>
+              <tr>
+                <td>Merma Lote Base (150 u)</td>
+                <td class="num">${formatUsd(evalData.baselineResult.expectedWaste)} USD</td>
+              </tr>
+            </tbody>
+          </table>`;
+        }
+      }
+
+      function renderRulesMatrix(evalData) {
+        const tbody = document.getElementById('rules-tbody');
+        if (!tbody) return;
+
+        tbody.innerHTML = MODEL.rulesMeta.map((rule) => {
+          const res = evaluateScenario(rule.weather, rule.calendar, rule.orders);
+          const isActive = rule.id === evalData.activeRule.id;
+          const wText = MODEL.likelihoods.weather[rule.weather].label;
+          const kText = MODEL.likelihoods.calendar[rule.calendar].label;
+          const sText = MODEL.likelihoods.orders[rule.orders].label;
+          const savingsText = res.optimal.batch === 100
+            ? `${formatUsd(res.wasteSavingsVsBaseline)}`
+            : res.optimal.batch === 200
+              ? `+${formatUsd(res.optimal.vme - res.baselineResult.vme)} (ing.)`
+              : '$0.00';
+
+          return `<tr class="rule-row ${isActive ? 'is-active-rule' : ''}" onclick="applyPreset('${rule.weather}', '${rule.calendar}', '${rule.orders}')">
+            <td><strong>${rule.id}</strong></td>
+            <td>SI <em>${wText}</em> ∧ <em>${kText}</em> ∧ <em>${sText}</em></td>
+            <td><strong>ENTONCES ${res.optimal.batch} u</strong></td>
+            <td class="num">${formatPct(res.posteriors[0])}</td>
+            <td class="num">${formatPct(res.posteriors[1])}</td>
+            <td class="num">${formatPct(res.posteriors[2])}</td>
+            <td class="num">${formatUsd(res.optimal.vme)}</td>
+            <td class="num">${savingsText}</td>
+            <td>${isActive ? '<span class="stamp stamp-active">Activa</span>' : '<span class="stamp">Simular</span>'}</td>
+          </tr>`;
+        }).join('');
+      }
+
+      function renderLedger() {
+        const emptyEl = document.getElementById('ledger-empty');
+        const wrapEl = document.getElementById('ledger-table-wrap');
+        const tbody = document.getElementById('ledger-tbody');
+        if (!emptyEl || !wrapEl || !tbody) return;
+
+        if (!appState.savedScenarios || appState.savedScenarios.length === 0) {
+          emptyEl.hidden = false;
+          wrapEl.hidden = true;
+          tbody.innerHTML = '';
+          return;
+        }
+
+        emptyEl.hidden = true;
+        wrapEl.hidden = false;
+
+        tbody.innerHTML = appState.savedScenarios.map((item, idx) => {
+          const wLabel = MODEL.likelihoods.weather[item.weather].label;
+          const kLabel = MODEL.likelihoods.calendar[item.calendar].label;
+          const sLabel = MODEL.likelihoods.orders[item.orders].label;
+          return `<tr>
+            <td>${wLabel} · ${kLabel} · ${sLabel}</td>
+            <td><strong>${item.ruleId}</strong></td>
+            <td><strong>${item.batch} u</strong></td>
+            <td class="num">${formatUsd(item.vme)}</td>
+            <td class="num">${formatUsd(item.savings)}</td>
+            <td class="num">
+              <button type="button" class="btn btn-secondary" style="min-height: 36px; padding: 4px 10px; font-size: 0.78rem;" onclick="applyPreset('${item.weather}', '${item.calendar}', '${item.orders}')">Cargar</button>
+              <button type="button" class="btn btn-secondary" style="min-height: 36px; padding: 4px 10px; font-size: 0.78rem;" onclick="removeSavedScenario(${idx})">Quitar</button>
+            </td>
+          </tr>`;
+        }).join('');
+      }
+
+      async function persistState() {
+        if (window.notebookAppApi && typeof window.notebookAppApi.setAppState === 'function') {
+          try {
+            await window.notebookAppApi.setAppState({
+              weather: appState.weather,
+              calendar: appState.calendar,
+              orders: appState.orders,
+              explanationOpen: appState.explanationOpen,
+              selectedNode: appState.selectedNode,
+              savedScenarios: appState.savedScenarios
+            });
+          } catch (err) {
+            // Safe fallback if host is unavailable
+          }
+        }
+      }
+
+      // Hoisted global interaction handlers
+      window.setEvidence = function (key, value) {
+        appState[key] = value;
+        renderUI();
+        persistState();
+      };
+
+      window.applyPreset = function (weather, calendar, orders) {
+        appState.weather = weather;
+        appState.calendar = calendar;
+        appState.orders = orders;
+        renderUI();
+        persistState();
+      };
+
+      window.toggleExplanation = function () {
+        appState.explanationOpen = !appState.explanationOpen;
+        renderUI();
+        persistState();
+        if (appState.explanationOpen) {
+          const panel = document.getElementById('explanation-panel');
+          if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      };
+
+      window.selectDagNode = function (nodeId) {
+        appState.selectedNode = nodeId;
+        const evalData = evaluateScenario(appState.weather, appState.calendar, appState.orders);
+        updateDagValues(evalData);
+        renderDagInspector(nodeId, evalData);
+        persistState();
+      };
+
+      window.handleDagKey = function (ev, nodeId) {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault();
+          window.selectDagNode(nodeId);
+        }
+      };
+
+      window.saveCurrentScenario = function () {
+        const evalData = evaluateScenario(appState.weather, appState.calendar, appState.orders);
+        const entry = {
+          weather: appState.weather,
+          calendar: appState.calendar,
+          orders: appState.orders,
+          ruleId: evalData.activeRule.id,
+          batch: evalData.optimal.batch,
+          vme: evalData.optimal.vme,
+          savings: evalData.wasteSavingsVsBaseline
+        };
+        appState.savedScenarios.unshift(entry);
+        if (appState.savedScenarios.length > 12) {
+          appState.savedScenarios = appState.savedScenarios.slice(0, 12);
+        }
+        const fb = document.getElementById('ledger-feedback');
+        if (fb) fb.textContent = `Escenario ${entry.ruleId} (${entry.batch} u) guardado en la bitácora.`;
+        renderLedger();
+        persistState();
+      };
+
+      window.removeSavedScenario = function (idx) {
+        appState.savedScenarios.splice(idx, 1);
+        renderLedger();
+        persistState();
+      };
+
+      window.clearSavedScenarios = function (btn) {
+        if (!btn) return;
+        if (appState.savedScenarios.length === 0) return;
+        if (btn.dataset.armed !== 'true') {
+          btn.dataset.armed = 'true';
+          btn.textContent = 'Confirmar limpieza';
+          return;
+        }
+        btn.dataset.armed = 'false';
+        btn.textContent = 'Limpiar bitácora';
+        appState.savedScenarios = [];
+        const fb = document.getElementById('ledger-feedback');
+        if (fb) fb.textContent = 'Bitácora de escenarios vaciada.';
+        renderLedger();
+        persistState();
+      };
+
+      window.exportCsvReport = function () {
+        const evalData = evaluateScenario(appState.weather, appState.calendar, appState.orders);
+        const lines = [
+          'La Espiga de Oro - Reporte de Decision Bayesiana (Pan Campesino)',
+          `Evidencia,${MODEL.likelihoods.weather[appState.weather].label} | ${MODEL.likelihoods.calendar[appState.calendar].label} | ${MODEL.likelihoods.orders[appState.orders].label}`,
+          `Regla Activa,${evalData.activeRule.id}`,
+          `Lote Optimo,${evalData.optimal.batch} unidades`,
+          `VME Optimo USD,${evalData.optimal.vme.toFixed(2)}`,
+          `Ahorro Merma vs 150u USD/dia,${evalData.wasteSavingsVsBaseline.toFixed(2)}`,
+          '',
+          'Estado,Prior,Posterior,Pago 100u,Pago 150u,Pago 200u'
+        ];
+        MODEL.states.forEach((st, idx) => {
+          lines.push(
+            `${st.label},${st.prior.toFixed(2)},${evalData.posteriors[idx].toFixed(4)},${evalData.batchResults[0].payoffs[idx].toFixed(2)},${evalData.batchResults[1].payoffs[idx].toFixed(2)},${evalData.batchResults[2].payoffs[idx].toFixed(2)}`
+          );
+        });
+        const csvContent = lines.join('\n');
+        if (window.notebookAppApi && typeof window.notebookAppApi.triggerFileDownload === 'function') {
+          window.notebookAppApi.triggerFileDownload({
+            content: csvContent,
+            contentType: 'text/csv',
+            encoding: 'UTF-8',
+            filename: 'espiga_de_oro_decision_bayesiana.csv'
+          });
+        }
+      };
+
+      async function initApp() {
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+          window.lucide.createIcons();
+        }
+        if (window.notebookAppApi && typeof window.notebookAppApi.getAppState === 'function') {
+          try {
+            const saved = await window.notebookAppApi.getAppState();
+            if (saved && typeof saved === 'object') {
+              if (saved.weather && MODEL.likelihoods.weather[saved.weather]) appState.weather = saved.weather;
+              if (saved.calendar && MODEL.likelihoods.calendar[saved.calendar]) appState.calendar = saved.calendar;
+              if (saved.orders && MODEL.likelihoods.orders[saved.orders]) appState.orders = saved.orders;
+              if (typeof saved.explanationOpen === 'boolean') appState.explanationOpen = saved.explanationOpen;
+              if (saved.selectedNode) appState.selectedNode = saved.selectedNode;
+              if (Array.isArray(saved.savedScenarios)) appState.savedScenarios = saved.savedScenarios;
+            }
+          } catch (err) {
+            // Ignore and use defaults
+          }
+        }
+        renderUI();
+        if (window.notebookAppApi && typeof window.notebookAppApi.notifyAppReady === 'function') {
+          window.notebookAppApi.notifyAppReady();
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initApp);
+      } else {
+        initApp();
+      }
+    })();
+  </script>
+</body>
+</html>
